@@ -32,7 +32,9 @@ class ClockTab(ctk.CTkFrame):
     def _tick(self) -> None:
         now = datetime.now()
         self.clock.set_display(now)
-        self._update_job = self.after(1000, self._tick)
+
+        delay_ms = max(25, 1000 - (now.microsecond // 1000))
+        self._update_job = self.after(delay_ms, self._tick)
 
 
 def build(parent: ctk.CTkFrame) -> ctk.CTkFrame:
