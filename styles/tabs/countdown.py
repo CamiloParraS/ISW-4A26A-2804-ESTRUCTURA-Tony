@@ -18,6 +18,7 @@ class CountdownTab(ctk.CTkFrame):
         self._deadline: float | None = None
         self._remaining_seconds = 60
         self._tick_job: str | None = None
+        self._normalizing_inputs = False
 
         self._hours_var = tk.StringVar(value="00")
         self._minutes_var = tk.StringVar(value="01")
@@ -25,28 +26,53 @@ class CountdownTab(ctk.CTkFrame):
         self._status_var = tk.StringVar(value="Ready")
 
         self.grid_rowconfigure(0, weight=1)
+        self.grid_rowconfigure(1, weight=0)
         self.grid_columnconfigure(0, weight=1)
-        self.grid_columnconfigure(1, weight=0)
 
         self.clock = AnalogClockWidget(self)
-        self.clock.grid(row=0, column=0, padx=(12, 8), pady=12, sticky="nsew")
+        self.clock.grid(row=0, column=0, padx=8, pady=(8, 6), sticky="nsew")
 
         self.controls = ctk.CTkFrame(self, corner_radius=14)
-        self.controls.grid(row=0, column=1, padx=(8, 12), pady=12, sticky="ns")
+        self.controls.grid(row=1, column=0, padx=8, pady=(6, 8), sticky="ew")
+        self.controls.grid_columnconfigure(0, weight=1)
         self.controls.grid_columnconfigure(1, weight=1)
+        self.controls.grid_columnconfigure(2, weight=1)
 
         ctk.CTkLabel(
             self.controls,
             text="Countdown",
             font=ctk.CTkFont(size=18, weight="bold"),
-        ).grid(row=0, column=0, columnspan=2, padx=12, pady=(12, 10), sticky="w")
+        ).grid(row=0, column=0, columnspan=3, padx=12, pady=(12, 10), sticky="w")
 
-        self._hours_entry = self._build_entry_row(1, "Hours", self._hours_var)
-        self._minutes_entry = self._build_entry_row(2, "Minutes", self._minutes_var)
-        self._seconds_entry = self._build_entry_row(3, "Seconds", self._seconds_var)
+        selectors = ctk.CTkFrame(self.controls, fg_color="transparent")
+        selectors.grid(
+            row=1, column=0, columnspan=3, padx=12, pady=(0, 10), sticky="ew"
+        )
+        selectors.grid_columnconfigure(0, weight=1)
+        selectors.grid_columnconfigure(1, weight=1)
+        selectors.grid_columnconfigure(2, weight=1)
+
+        self._hours_entry = self._build_entry_cell(
+            selectors,
+            column=0,
+            label="Hours",
+            variable=self._hours_var,
+        )
+        self._minutes_entry = self._build_entry_cell(
+            selectors,
+            column=1,
+            label="Minutes",
+            variable=self._minutes_var,
+        )
+        self._seconds_entry = self._build_entry_cell(
+            selectors,
+            column=2,
+            label="Seconds",
+            variable=self._seconds_var,
+        )
 
         buttons = ctk.CTkFrame(self.controls, fg_color="transparent")
-        buttons.grid(row=4, column=0, columnspan=2, padx=12, pady=(12, 0), sticky="ew")
+        buttons.grid(row=2, column=0, columnspan=3, padx=12, pady=(2, 0), sticky="ew")
         for index in range(4):
             buttons.grid_columnconfigure(index, weight=1)
 
@@ -67,7 +93,11 @@ class CountdownTab(ctk.CTkFrame):
             textvariable=self._status_var,
             font=ctk.CTkFont(size=14, weight="bold"),
             text_color="#334155",
-        ).grid(row=5, column=0, columnspan=2, padx=12, pady=(12, 12), sticky="w")
+        ).grid(row=3, column=0, columnspan=3, padx=12, pady=(12, 12), sticky="w")
+
+        for entry in (self._hours_entry, self._minutes_entry, self._seconds_entry):
+            entry.bind("<FocusOut>", self._on_input_focus_out)
+            entry.bind("<Return>", self._on_input_commit)
 
         self._refresh_view()
         self._schedule_tick()
@@ -81,24 +111,89 @@ class CountdownTab(ctk.CTkFrame):
             self._tick_job = None
         super().destroy()
 
-    def _build_entry_row(
+    def _build_entry_cell(
         self,
-        row: int,
+        parent: ctk.CTkFrame,
+        column: int,
         label: str,
         variable: tk.StringVar,
     ) -> ctk.CTkEntry:
-        ctk.CTkLabel(self.controls, text=label).grid(
-            row=row,
+        cell = ctk.CTkFrame(parent)
+        cell.grid(
+            row=0,
+            column=column,
+            padx=(0, 8) if column < 2 else (0, 0),
+            pady=0,
+            sticky="ew",
+        )
+        cell.grid_columnconfigure(0, weight=1)
+
+        ctk.CTkLabel(cell, text=label, anchor="w").grid(
+            row=0,
             column=0,
-            padx=12,
-            pady=(0, 8),
+            padx=10,
+            pady=(8, 6),
             sticky="w",
         )
+
+        vcmd = self.register(self._validate_digits)
         entry = ctk.CTkEntry(
-            self.controls, width=88, textvariable=variable, justify="center"
+            cell,
+            textvariable=variable,
+            justify="center",
+            font=ctk.CTkFont(size=16, weight="bold"),
+            validate="key",
+            validatecommand=(vcmd, "%P"),
         )
-        entry.grid(row=row, column=1, padx=(0, 12), pady=(0, 8), sticky="e")
+        entry.grid(row=1, column=0, padx=10, pady=(0, 10), sticky="ew")
         return entry
+
+    def _validate_digits(self, value: str) -> bool:
+        return value == "" or (value.isdigit())
+
+    def _safe_int(self, value: str) -> int:
+        digits = "".join(character for character in value if character.isdigit())
+        if not digits:
+            return 0
+        return int(digits)
+
+    def _normalize_fields(self) -> tuple[int, int, int]:
+        hours = self._safe_int(self._hours_var.get())
+        minutes = self._safe_int(self._minutes_var.get())
+        seconds = self._safe_int(self._seconds_var.get())
+
+        minutes += seconds // 60
+        seconds %= 60
+
+        hours += minutes // 60
+        minutes %= 60
+
+        hours = min(hours, 999)
+
+        self._normalizing_inputs = True
+        try:
+            self._hours_var.set(str(hours) if hours >= 100 else f"{hours:02}")
+            self._minutes_var.set(f"{minutes:02}")
+            self._seconds_var.set(f"{seconds:02}")
+        finally:
+            self._normalizing_inputs = False
+
+        return hours, minutes, seconds
+
+    def _on_input_focus_out(self, event: tk.Event) -> None:
+        self._on_input_commit(event)
+
+    def _on_input_commit(self, event: tk.Event | None = None) -> None:
+        if self._normalizing_inputs or self._state == "running":
+            return
+
+        hours, minutes, seconds = self._normalize_fields()
+        self._remaining_seconds = hours * 3600 + minutes * 60 + seconds
+
+        if self._state == "paused":
+            self._deadline = None
+
+        self._refresh_view()
 
     def _schedule_tick(self) -> None:
         self._tick_job = self.after(200, self._tick)
@@ -120,20 +215,7 @@ class CountdownTab(ctk.CTkFrame):
         self._schedule_tick()
 
     def _duration_from_fields(self) -> int:
-        try:
-            hours = int(self._hours_var.get())
-            minutes = int(self._minutes_var.get())
-            seconds = int(self._seconds_var.get())
-        except ValueError:
-            hours, minutes, seconds = 0, 1, 0
-
-        hours = max(0, min(hours, 99))
-        minutes = max(0, min(minutes, 59))
-        seconds = max(0, min(seconds, 59))
-
-        self._hours_var.set(f"{hours:02}")
-        self._minutes_var.set(f"{minutes:02}")
-        self._seconds_var.set(f"{seconds:02}")
+        hours, minutes, seconds = self._normalize_fields()
 
         duration = hours * 3600 + minutes * 60 + seconds
         return max(1, duration)
@@ -161,11 +243,7 @@ class CountdownTab(ctk.CTkFrame):
         hours, rem = divmod(total, 3600)
         minutes, seconds = divmod(rem, 60)
 
-        digital = (
-            f"{hours:02}:{minutes:02}:{seconds:02}"
-            if hours
-            else f"{minutes:02}:{seconds:02}"
-        )
+        digital = f"{hours:02}:{minutes:02}:{seconds:02}"
         display_hour = hours % 12 or 12
         display_time = datetime(2000, 1, 1, display_hour, minutes, seconds)
         self.clock.set_display(display_time, digital_text=digital)
