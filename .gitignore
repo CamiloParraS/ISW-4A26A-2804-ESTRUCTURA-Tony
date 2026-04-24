@@ -1,3 +1,5 @@
 .venv
 skills-lock.json
 .agents
+*.pyc
+__pycache__
