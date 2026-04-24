@@ -12,7 +12,7 @@ class App(ctk.CTk):
     def __init__(self) -> None:
         super().__init__()
         self.title("TONY Analog Clock")
-        self.geometry("980x680")
+        self.geometry("880x580")
         self.minsize(760, 540)
 
         self.columnconfigure(0, weight=1)
