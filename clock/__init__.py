@@ -1,5 +1,5 @@
 from .AnalogClockBase import AnalogClockBase
 from .ClockMark import ClockMark
-from .ClockRing import ClockRing
+from .ClockEngine import ClockEngine
 
-__all__ = ["AnalogClockBase", "ClockMark", "ClockRing"]
+__all__ = ["AnalogClockBase", "ClockMark", "ClockEngine"]
