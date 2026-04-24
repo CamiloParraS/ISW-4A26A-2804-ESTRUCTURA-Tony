@@ -1,8 +1,10 @@
-import streamlit as st
+import tkinter as tk
 
-st.write("""
-# My first app
-## Hello *world!*
-### What is a clock?
-#### A Clock is something that works like a clock
-""")
+
+def run_ui():
+    root = tk.Tk()
+    root.title("Tkinter Window")
+    root.geometry("320x160")
+    label = tk.Label(root, text="Hello from tkinter")
+    label.pack(expand=True)
+    root.mainloop()
