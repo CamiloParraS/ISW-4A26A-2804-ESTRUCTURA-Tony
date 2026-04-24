@@ -1,6 +1,5 @@
-from clock import AnalogClockBase
+from styles.launcher import run_ui
 
 
 if __name__ == "__main__":
-    clock = AnalogClockBase()
-    print(clock.hour_path.sequence())
+    run_ui()
