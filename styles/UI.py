@@ -1,22 +1,37 @@
-import customtkinter
+from __future__ import annotations
+
+import customtkinter as ctk
+
+from styles.tabs import build_clock_tab, build_countdown_tab
+
+ctk.set_appearance_mode("System")
+ctk.set_default_color_theme("blue")
 
 
-customtkinter.set_appearance_mode("System")
-customtkinter.set_default_color_theme("blue")
-
-
-class App(customtkinter.CTk):
-    def __init__(self):
+class App(ctk.CTk):
+    def __init__(self) -> None:
         super().__init__()
-        self.title("TONY")
-        self.geometry("420x200")
+        self.title("TONY Analog Clock")
+        self.geometry("980x680")
+        self.minsize(760, 540)
 
-        self.label = customtkinter.CTkLabel(
+        self.columnconfigure(0, weight=1)
+        self.rowconfigure(0, weight=1)
+
+        self.tabview = ctk.CTkTabview(
             self,
-            text="Is time to use the clock!!!!",
-            font=customtkinter.CTkFont(size=20, weight="bold"),
+            segmented_button_selected_hover_color="#1d4ed8",
         )
-        self.label.pack(expand=True)
+        self.tabview.grid(row=0, column=0, padx=12, pady=12, sticky="nsew")
+
+        self.tabview.add("Clock")
+        self.tabview.add("Countdown")
+
+        self.clock_tab = build_clock_tab(self.tabview.tab("Clock"))
+        self.clock_tab.pack(fill="both", expand=True)
+
+        self.countdown_tab = build_countdown_tab(self.tabview.tab("Countdown"))
+        self.countdown_tab.pack(fill="both", expand=True)
 
 
 def run_ui():
