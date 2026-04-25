@@ -1,4 +1,4 @@
-from styles.UI import run_ui
+from ui.main_window import run_ui
 
 
 if __name__ == "__main__":

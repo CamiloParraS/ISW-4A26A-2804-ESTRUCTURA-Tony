@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import customtkinter as ctk
 
-from styles.tabs import build_clock_tab, build_countdown_tab
+from ui.tabs import build_clock_tab, build_countdown_tab
 
 ctk.set_appearance_mode("Light")
 ctk.set_default_color_theme("blue")
@@ -11,7 +11,7 @@ ctk.set_default_color_theme("blue")
 class App(ctk.CTk):
     def __init__(self) -> None:
         super().__init__()
-        self.title("TONY Analog Clock")
+        self.title("TONY El Reloj")
         self.geometry("880x580")
         self.minsize(760, 540)
 

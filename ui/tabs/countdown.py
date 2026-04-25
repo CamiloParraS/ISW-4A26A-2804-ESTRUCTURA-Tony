@@ -7,7 +7,7 @@ from datetime import datetime
 
 import customtkinter as ctk
 
-from styles.widgets import AnalogClockWidget
+from ui.widgets import AnalogClockWidget
 
 
 class CountdownTab(ctk.CTkFrame):
@@ -240,9 +240,11 @@ class CountdownTab(ctk.CTkFrame):
         )
 
         input_state = "disabled" if self._state == "running" else "normal"
-        self._hours_entry.configure(state=input_state)
-        self._minutes_entry.configure(state=input_state)
-        self._seconds_entry.configure(state=input_state)
+        text_col = "#9CA3AF" if self._state == "running" else "#000000"
+        
+        self._hours_entry.configure(state=input_state, text_color=text_col)
+        self._minutes_entry.configure(state=input_state, text_color=text_col)
+        self._seconds_entry.configure(state=input_state, text_color=text_col)
 
         total = self._remaining_seconds
         hours, rem = divmod(total, 3600)

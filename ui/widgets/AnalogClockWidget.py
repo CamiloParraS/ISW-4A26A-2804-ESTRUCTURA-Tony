@@ -7,7 +7,7 @@ from datetime import datetime
 
 import customtkinter as ctk
 
-from clock.AnalogClockBase import AnalogClockBase
+from core.AnalogClockBase import AnalogClockBase
 
 FACE_BG = "#f8fafc"
 FACE_OUTLINE = "#0f172a"

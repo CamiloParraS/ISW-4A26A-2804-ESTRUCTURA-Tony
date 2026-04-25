@@ -4,7 +4,7 @@ from datetime import datetime
 
 import customtkinter as ctk
 
-from styles.widgets import AnalogClockWidget
+from ui.widgets import AnalogClockWidget
 
 
 class ClockTab(ctk.CTkFrame):
