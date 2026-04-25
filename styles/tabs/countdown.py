@@ -239,6 +239,11 @@ class CountdownTab(ctk.CTkFrame):
             state="normal" if self._state == "paused" else "disabled"
         )
 
+        input_state = "disabled" if self._state == "running" else "normal"
+        self._hours_entry.configure(state=input_state)
+        self._minutes_entry.configure(state=input_state)
+        self._seconds_entry.configure(state=input_state)
+
         total = self._remaining_seconds
         hours, rem = divmod(total, 3600)
         minutes, seconds = divmod(rem, 60)
