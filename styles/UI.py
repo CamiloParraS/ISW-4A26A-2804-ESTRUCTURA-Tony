@@ -4,7 +4,7 @@ import customtkinter as ctk
 
 from styles.tabs import build_clock_tab, build_countdown_tab
 
-ctk.set_appearance_mode("System")
+ctk.set_appearance_mode("Light")
 ctk.set_default_color_theme("blue")
 
 

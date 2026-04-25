@@ -141,7 +141,7 @@ class CountdownTab(ctk.CTkFrame):
             cell,
             textvariable=variable,
             justify="center",
-            font=ctk.CTkFont(size=16, weight="bold"),
+            font=ctk.CTkFont(family="Consolas", size=16, weight="bold"),
             validate="key",
             validatecommand=(vcmd, "%P"),
         )

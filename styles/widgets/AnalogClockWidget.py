@@ -7,7 +7,7 @@ from datetime import datetime
 
 import customtkinter as ctk
 
-from clock.ClockEngine import ClockEngine
+from clock.AnalogClockBase import AnalogClockBase
 
 FACE_BG = "#f8fafc"
 FACE_OUTLINE = "#0f172a"
@@ -33,9 +33,7 @@ class AnalogClockWidget(ctk.CTkFrame):
         self._digital_formatter = digital_formatter or self._default_digital_formatter
         self._display_time = self._time_provider()
 
-        self.hour_engine = ClockEngine(range(1, 13))
-        self.minute_engine = ClockEngine(range(60))
-        self.second_engine = ClockEngine(range(60))
+        self.clock_base = AnalogClockBase()
 
         self._sync_to_current_time(self._display_time)
 
@@ -54,7 +52,7 @@ class AnalogClockWidget(ctk.CTkFrame):
         self.digital_label = ctk.CTkLabel(
             self,
             text="",
-            font=ctk.CTkFont(size=20, weight="bold"),
+            font=ctk.CTkFont(family="Consolas", size=20, weight="bold"),
             text_color=TEXT_SECONDARY,
         )
         self.digital_label.grid(row=1, column=0, padx=14, pady=(0, 14), sticky="ew")
@@ -88,14 +86,21 @@ class AnalogClockWidget(ctk.CTkFrame):
         self.digital_label.configure(text=digital_text)
         self._draw_clock()
 
+    def tick(self) -> None:
+        self.clock_base.tick()
+        # Ensure digital display and visual hands sync up.
+        # Since tick implies we advanced 1 second, we should update the digital label.
+        # However, to format accurately we need a datetime object. Let's rebuild one if needed.
+        # This is a bit tricky for countdowns vs clocks, so we'll just update visuals.
+        self._draw_clock()
+
     def _default_digital_formatter(self, current_time: datetime) -> str:
         return current_time.strftime("%I:%M:%S %p").lstrip("0")
 
     def _sync_to_current_time(self, current_time: datetime) -> None:
-        hour = current_time.hour % 12 or 12
-        self.hour_engine.place_on(hour)
-        self.minute_engine.place_on(current_time.minute)
-        self.second_engine.place_on(current_time.second)
+        self.clock_base.sync_time(
+            current_time.hour, current_time.minute, current_time.second
+        )
 
     def _on_canvas_resize(self, event: tk.Event) -> None:
         self._cancel_job("_redraw_job")
@@ -187,9 +192,9 @@ class AnalogClockWidget(ctk.CTkFrame):
         radius: float,
         size: float,
     ) -> None:
-        hour_value = self.hour_engine.current_mark
-        minute_value = self.minute_engine.current_mark
-        second_value = self.second_engine.current_mark
+        hour_value = self.clock_base.hour_position
+        minute_value = self.clock_base.minute_position
+        second_value = self.clock_base.second_position
 
         hour_angle = (
             (hour_value % 12) * 30
@@ -198,6 +203,25 @@ class AnalogClockWidget(ctk.CTkFrame):
         )
         minute_angle = minute_value * 6 + second_value * 0.1
         second_angle = second_value * 6
+
+        # Draw shadows for depth
+        shadow_offset = max(1, size * 0.005)
+        for angle, length, width, color in [
+            (hour_angle, radius * 0.48, max(int(size * 0.018), 5), "#cbd5e1"),
+            (minute_angle, radius * 0.68, max(int(size * 0.012), 4), "#cbd5e1"),
+            (second_angle, radius * 0.82, max(int(size * 0.006), 2), "#cbd5e1"),
+        ]:
+            end_x, end_y = self._hand_endpoint(center_x, center_y, length, angle)
+            self.canvas.create_line(
+                center_x + shadow_offset,
+                center_y + shadow_offset,
+                end_x + shadow_offset,
+                end_y + shadow_offset,
+                fill=color,
+                width=width,
+                capstyle="round",
+                tags="hands",
+            )
 
         hour_end = self._hand_endpoint(center_x, center_y, radius * 0.48, hour_angle)
         minute_end = self._hand_endpoint(

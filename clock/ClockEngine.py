@@ -16,6 +16,7 @@ class ClockEngine(Generic[MarkType]):
         self.head: ClockMark[MarkType] | None = None
         self._current: ClockMark[MarkType] | None = None
         self._size = 0
+        self._node_map: dict[MarkType, ClockMark[MarkType]] = {}
 
         for index, label in enumerate(mark_list):
             if index == 0:
@@ -42,6 +43,7 @@ class ClockEngine(Generic[MarkType]):
             new_node.previous_mark = self.head
             self._current = new_node
             self._size = 1
+            self._node_map[data] = new_node
             return
 
         last = self.head.previous_mark
@@ -54,6 +56,7 @@ class ClockEngine(Generic[MarkType]):
         self.head.previous_mark = new_node
         self.head = new_node
         self._size += 1
+        self._node_map[data] = new_node
 
     def insert_at_end(self, data: MarkType) -> None:
         new_node = ClockMark(data)
@@ -64,6 +67,7 @@ class ClockEngine(Generic[MarkType]):
             new_node.previous_mark = self.head
             self._current = new_node
             self._size = 1
+            self._node_map[data] = new_node
             return
 
         last = self.head.previous_mark
@@ -75,45 +79,40 @@ class ClockEngine(Generic[MarkType]):
         new_node.previous_mark = last
         self.head.previous_mark = new_node
         self._size += 1
+        self._node_map[data] = new_node
 
     def delete(self, data: MarkType) -> None:
         if self.head is None:
             raise ValueError("ClockEngine is empty.")
 
-        current = self.head
-        assert current is not None
+        if data not in self._node_map:
+            raise ValueError(f"Unknown clock mark: {data!r}")
 
-        for _ in range(self._size):
-            if current.label == data:
-                if self._size == 1:
-                    self.head = None
-                    self._current = None
-                    self._size = 0
-                    return
+        current = self._node_map[data]
 
-                previous_node = current.previous_mark
-                next_node = current.next_mark
-                if previous_node is None or next_node is None:
-                    raise RuntimeError("ClockEngine links were not built correctly.")
+        if self._size == 1:
+            self.head = None
+            self._current = None
+            self._size = 0
+            self._node_map.clear()
+            return
 
-                previous_node.next_mark = next_node
-                next_node.previous_mark = previous_node
+        previous_node = current.previous_mark
+        next_node = current.next_mark
+        if previous_node is None or next_node is None:
+            raise RuntimeError("ClockEngine links were not built correctly.")
 
-                if current is self.head:
-                    self.head = next_node
+        previous_node.next_mark = next_node
+        next_node.previous_mark = previous_node
 
-                if current is self._current:
-                    self._current = next_node
+        if current is self.head:
+            self.head = next_node
 
-                self._size -= 1
-                return
+        if current is self._current:
+            self._current = next_node
 
-            next_node = current.next_mark
-            if next_node is None:
-                raise RuntimeError("ClockEngine links were not built correctly.")
-            current = next_node
-
-        raise ValueError(f"Unknown clock mark: {data!r}")
+        self._size -= 1
+        del self._node_map[data]
 
     def print_list(self) -> None:
         if self.head is None:
@@ -153,20 +152,11 @@ class ClockEngine(Generic[MarkType]):
         if self.head is None:
             raise RuntimeError("ClockEngine is empty.")
 
-        current = self.head
-        assert current is not None
+        if label not in self._node_map:
+            raise ValueError(f"Unknown clock mark: {label!r}")
 
-        for _ in range(self._size):
-            if current.label == label:
-                self._current = current
-                return self.current_mark
-
-            next_node = current.next_mark
-            if next_node is None:
-                raise RuntimeError("ClockEngine links were not built correctly.")
-            current = next_node
-
-        raise ValueError(f"Unknown clock mark: {label!r}")
+        self._current = self._node_map[label]
+        return self.current_mark
 
     def sequence(self, starting_label: MarkType | None = None) -> list[MarkType]:
         """Retorna el reloj de alguna forma."""
@@ -207,22 +197,9 @@ class ClockEngine(Generic[MarkType]):
         return f"ClockEngine(current_mark={self.current_mark!r}, sequence={self.sequence()!r})"
 
     def _mark_for(self, label: MarkType) -> ClockMark[MarkType]:
-        if self.head is None:
+        if label not in self._node_map:
             raise ValueError(f"Unknown clock mark: {label!r}")
-
-        current = self.head
-        assert current is not None
-
-        for _ in range(self._size):
-            if current.label == label:
-                return current
-
-            next_node = current.next_mark
-            if next_node is None:
-                raise RuntimeError("ClockEngine links were not built correctly.")
-            current = next_node
-
-        raise ValueError(f"Unknown clock mark: {label!r}")
+        return self._node_map[label]
 
     def _walk(
         self,
