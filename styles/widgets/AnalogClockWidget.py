@@ -88,10 +88,13 @@ class AnalogClockWidget(ctk.CTkFrame):
 
     def tick(self) -> None:
         self.clock_base.tick()
-        # Ensure digital display and visual hands sync up.
-        # Since tick implies we advanced 1 second, we should update the digital label.
-        # However, to format accurately we need a datetime object. Let's rebuild one if needed.
-        # This is a bit tricky for countdowns vs clocks, so we'll just update visuals.
+        
+        from datetime import timedelta
+        self._display_time += timedelta(seconds=1)
+        
+        digital_text = self._digital_formatter(self._display_time)
+        self.digital_label.configure(text=digital_text)
+        
         self._draw_clock()
 
     def _default_digital_formatter(self, current_time: datetime) -> str:

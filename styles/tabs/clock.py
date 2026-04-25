@@ -18,7 +18,8 @@ class ClockTab(ctk.CTkFrame):
         self.clock = AnalogClockWidget(self)
         self.clock.grid(row=0, column=0, padx=12, pady=12, sticky="nsew")
 
-        self._tick()
+        self.clock.set_display(datetime.now())
+        self._schedule_tick()
 
     def destroy(self) -> None:
         if self._update_job is not None:
@@ -29,12 +30,14 @@ class ClockTab(ctk.CTkFrame):
             self._update_job = None
         super().destroy()
 
-    def _tick(self) -> None:
+    def _schedule_tick(self) -> None:
         now = datetime.now()
-        self.clock.set_display(now)
-
         delay_ms = max(25, 1000 - (now.microsecond // 1000))
         self._update_job = self.after(delay_ms, self._tick)
+
+    def _tick(self) -> None:
+        self.clock.tick()
+        self._schedule_tick()
 
 
 def build(parent: ctk.CTkFrame) -> ctk.CTkFrame:
