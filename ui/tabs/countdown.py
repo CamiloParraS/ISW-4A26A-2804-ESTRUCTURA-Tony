@@ -8,6 +8,7 @@ from datetime import datetime
 import customtkinter as ctk
 
 from ui.widgets import AnalogClockWidget
+from utils import TimeUtils, ValidationUtils
 
 
 class CountdownTab(ctk.CTkFrame):
@@ -136,7 +137,7 @@ class CountdownTab(ctk.CTkFrame):
             sticky="w",
         )
 
-        vcmd = self.register(self._validate_digits)
+        vcmd = self.register(ValidationUtils.is_digits_only)
         entry = ctk.CTkEntry(
             cell,
             textvariable=variable,
@@ -148,27 +149,12 @@ class CountdownTab(ctk.CTkFrame):
         entry.grid(row=1, column=0, padx=10, pady=(0, 10), sticky="ew")
         return entry
 
-    def _validate_digits(self, value: str) -> bool:
-        return value == "" or (value.isdigit())
-
-    def _safe_int(self, value: str) -> int:
-        digits = "".join(character for character in value if character.isdigit())
-        if not digits:
-            return 0
-        return int(digits)
-
     def _normalize_fields(self) -> tuple[int, int, int]:
-        hours = self._safe_int(self._hours_var.get())
-        minutes = self._safe_int(self._minutes_var.get())
-        seconds = self._safe_int(self._seconds_var.get())
+        h = ValidationUtils.safe_int(self._hours_var.get())
+        m = ValidationUtils.safe_int(self._minutes_var.get())
+        s = ValidationUtils.safe_int(self._seconds_var.get())
 
-        minutes += seconds // 60
-        seconds %= 60
-
-        hours += minutes // 60
-        minutes %= 60
-
-        hours = min(hours, 999)
+        hours, minutes, seconds = TimeUtils.normalize_time(h, m, s)
 
         self._normalizing_inputs = True
         try:
@@ -188,7 +174,7 @@ class CountdownTab(ctk.CTkFrame):
             return
 
         hours, minutes, seconds = self._normalize_fields()
-        self._remaining_seconds = hours * 3600 + minutes * 60 + seconds
+        self._remaining_seconds = TimeUtils.to_seconds(hours, minutes, seconds)
 
         if self._state == "paused":
             self._deadline = None
@@ -216,9 +202,7 @@ class CountdownTab(ctk.CTkFrame):
 
     def _duration_from_fields(self) -> int:
         hours, minutes, seconds = self._normalize_fields()
-
-        duration = hours * 3600 + minutes * 60 + seconds
-        return max(1, duration)
+        return max(1, TimeUtils.to_seconds(hours, minutes, seconds))
 
     def _refresh_view(self) -> None:
         state_text = {
@@ -246,9 +230,7 @@ class CountdownTab(ctk.CTkFrame):
         self._minutes_entry.configure(state=input_state, text_color=text_col)
         self._seconds_entry.configure(state=input_state, text_color=text_col)
 
-        total = self._remaining_seconds
-        hours, rem = divmod(total, 3600)
-        minutes, seconds = divmod(rem, 60)
+        hours, minutes, seconds = TimeUtils.from_seconds(self._remaining_seconds)
 
         digital = f"{hours:02}:{minutes:02}:{seconds:02}"
         display_hour = hours % 12 or 12

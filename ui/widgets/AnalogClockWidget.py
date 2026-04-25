@@ -8,6 +8,7 @@ from datetime import datetime
 import customtkinter as ctk
 
 from core.AnalogClockBase import AnalogClockBase
+from utils import GeometryUtils, TimeUtils
 
 FACE_BG = "#f8fafc"
 FACE_OUTLINE = "#0f172a"
@@ -30,7 +31,7 @@ class AnalogClockWidget(ctk.CTkFrame):
 
         self._redraw_job: str | None = None
         self._time_provider = time_provider or datetime.now
-        self._digital_formatter = digital_formatter or self._default_digital_formatter
+        self._digital_formatter = digital_formatter or TimeUtils.format_digital
         self._display_time = self._time_provider()
 
         self.clock_base = AnalogClockBase()
@@ -96,9 +97,6 @@ class AnalogClockWidget(ctk.CTkFrame):
         self.digital_label.configure(text=digital_text)
         
         self._draw_clock()
-
-    def _default_digital_formatter(self, current_time: datetime) -> str:
-        return current_time.strftime("%I:%M:%S %p").lstrip("0")
 
     def _sync_to_current_time(self, current_time: datetime) -> None:
         self.clock_base.sync_time(
@@ -178,16 +176,6 @@ class AnalogClockWidget(ctk.CTkFrame):
 
         self._draw_hands(center_x, center_y, radius, size)
 
-    def _hand_endpoint(
-        self,
-        center_x: float,
-        center_y: float,
-        length: float,
-        angle_degrees: float,
-    ) -> tuple[float, float]:
-        angle = math.radians(angle_degrees - 90)
-        return center_x + length * math.cos(angle), center_y + length * math.sin(angle)
-
     def _draw_hands(
         self,
         center_x: float,
@@ -214,7 +202,7 @@ class AnalogClockWidget(ctk.CTkFrame):
             (minute_angle, radius * 0.68, max(int(size * 0.012), 4), "#cbd5e1"),
             (second_angle, radius * 0.82, max(int(size * 0.006), 2), "#cbd5e1"),
         ]:
-            end_x, end_y = self._hand_endpoint(center_x, center_y, length, angle)
+            end_x, end_y = GeometryUtils.polar_to_cartesian(center_x, center_y, length, angle)
             self.canvas.create_line(
                 center_x + shadow_offset,
                 center_y + shadow_offset,
@@ -226,13 +214,9 @@ class AnalogClockWidget(ctk.CTkFrame):
                 tags="hands",
             )
 
-        hour_end = self._hand_endpoint(center_x, center_y, radius * 0.48, hour_angle)
-        minute_end = self._hand_endpoint(
-            center_x, center_y, radius * 0.68, minute_angle
-        )
-        second_end = self._hand_endpoint(
-            center_x, center_y, radius * 0.82, second_angle
-        )
+        hour_end = GeometryUtils.polar_to_cartesian(center_x, center_y, radius * 0.48, hour_angle)
+        minute_end = GeometryUtils.polar_to_cartesian(center_x, center_y, radius * 0.68, minute_angle)
+        second_end = GeometryUtils.polar_to_cartesian(center_x, center_y, radius * 0.82, second_angle)
 
         self.canvas.delete("hands")
         self.canvas.create_line(
