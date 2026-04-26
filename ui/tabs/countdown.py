@@ -7,6 +7,7 @@ from datetime import datetime
 
 import customtkinter as ctk
 
+from ui.helpers import SchedulerUtils
 from ui.widgets import AnalogClockWidget
 from utils import TimeUtils, ValidationUtils
 
@@ -104,12 +105,8 @@ class CountdownTab(ctk.CTkFrame):
         self._schedule_tick()
 
     def destroy(self) -> None:
-        if self._tick_job is not None:
-            try:
-                self.after_cancel(self._tick_job)
-            except Exception:
-                pass
-            self._tick_job = None
+        SchedulerUtils.cancel_after_job(self, self._tick_job)
+        self._tick_job = None
         super().destroy()
 
     def _build_entry_cell(
@@ -225,7 +222,7 @@ class CountdownTab(ctk.CTkFrame):
 
         input_state = "disabled" if self._state == "running" else "normal"
         text_col = "#9CA3AF" if self._state == "running" else "#000000"
-        
+
         self._hours_entry.configure(state=input_state, text_color=text_col)
         self._minutes_entry.configure(state=input_state, text_color=text_col)
         self._seconds_entry.configure(state=input_state, text_color=text_col)

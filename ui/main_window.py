@@ -33,6 +33,34 @@ class App(ctk.CTk):
         self.countdown_tab = build_countdown_tab(self.tabview.tab("Countdown"))
         self.countdown_tab.pack(fill="both", expand=True)
 
+        self.bind_all("<Left>", self._on_left_shortcut, add="+")
+        self.bind_all("<Right>", self._on_right_shortcut, add="+")
+        self.bind_all("<space>", self._on_space_shortcut, add="+")
+
+    def _clock_tab_is_active(self) -> bool:
+        return self.tabview.get() == "Clock"
+
+    def _on_left_shortcut(self, _event: object) -> str | None:
+        if not self._clock_tab_is_active():
+            return None
+        if hasattr(self.clock_tab, "on_shortcut_left"):
+            self.clock_tab.on_shortcut_left()
+        return "break"
+
+    def _on_right_shortcut(self, _event: object) -> str | None:
+        if not self._clock_tab_is_active():
+            return None
+        if hasattr(self.clock_tab, "on_shortcut_right"):
+            self.clock_tab.on_shortcut_right()
+        return "break"
+
+    def _on_space_shortcut(self, _event: object) -> str | None:
+        if not self._clock_tab_is_active():
+            return None
+        if hasattr(self.clock_tab, "on_shortcut_local"):
+            self.clock_tab.on_shortcut_local()
+        return "break"
+
 
 def run_ui():
     app = App()
