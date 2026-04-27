@@ -23,6 +23,9 @@ class CountdownTab(CountdownStateMixin, CountdownUiMixin, ctk.CTkFrame):
         self._hours_var = tk.StringVar(value="00")
         self._minutes_var = tk.StringVar(value="01")
         self._seconds_var = tk.StringVar(value="00")
+        self._delta_hours_var = tk.StringVar(value="00")
+        self._delta_minutes_var = tk.StringVar(value="00")
+        self._delta_seconds_var = tk.StringVar(value="00")
         self._status_var = tk.StringVar(value="Ready")
 
         self._build_layout()

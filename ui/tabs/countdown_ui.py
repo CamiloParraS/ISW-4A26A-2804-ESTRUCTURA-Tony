@@ -12,27 +12,55 @@ from utils import TimeUtils, ValidationUtils
 class CountdownUiMixin:
     def _build_layout(self) -> None:
         self.grid_rowconfigure(0, weight=1)
-        self.grid_rowconfigure(1, weight=0)
-        self.grid_columnconfigure(0, weight=1)
+        self.grid_columnconfigure(0, weight=3)
+        self.grid_columnconfigure(1, weight=2)
 
-        self.clock = AnalogClockWidget(self)
-        self.clock.grid(row=0, column=0, padx=8, pady=(8, 6), sticky="nsew")
+        self.read_panel = ctk.CTkFrame(self, corner_radius=18)
+        self.read_panel.grid(row=0, column=0, padx=(8, 4), pady=8, sticky="nsew")
+        self.read_panel.grid_rowconfigure(0, weight=1)
+        self.read_panel.grid_rowconfigure(1, weight=0)
+        self.read_panel.grid_columnconfigure(0, weight=1)
 
-        self.controls = ctk.CTkFrame(self, corner_radius=14)
-        self.controls.grid(row=1, column=0, padx=8, pady=(6, 8), sticky="ew")
+        self.clock = AnalogClockWidget(self.read_panel)
+        self.clock.digital_label.configure(
+            font=ctk.CTkFont(family="Consolas", size=34, weight="bold"),
+            text_color="#0f172a",
+        )
+        self.clock.grid(row=0, column=0, padx=16, pady=(16, 8), sticky="nsew")
+
+        self.status_badge = ctk.CTkLabel(
+            self.read_panel,
+            textvariable=self._status_var,
+            font=ctk.CTkFont(size=15, weight="bold"),
+            corner_radius=999,
+            fg_color="#dbeafe",
+            text_color="#1d4ed8",
+            padx=16,
+            pady=8,
+        )
+        self.status_badge.grid(row=1, column=0, padx=16, pady=(0, 16), sticky="w")
+
+        self.controls = ctk.CTkFrame(self, corner_radius=18)
+        self.controls.grid(row=0, column=1, padx=(4, 8), pady=8, sticky="nsew")
         self.controls.grid_columnconfigure(0, weight=1)
         self.controls.grid_columnconfigure(1, weight=1)
         self.controls.grid_columnconfigure(2, weight=1)
 
         ctk.CTkLabel(
             self.controls,
-            text="Countdown",
+            text="Countdown Controls",
             font=ctk.CTkFont(size=18, weight="bold"),
         ).grid(row=0, column=0, columnspan=3, padx=12, pady=(12, 10), sticky="w")
 
+        ctk.CTkLabel(
+            self.controls,
+            text="Time Inputs",
+            font=ctk.CTkFont(size=14, weight="bold"),
+        ).grid(row=1, column=0, columnspan=3, padx=12, pady=(0, 6), sticky="w")
+
         selectors = ctk.CTkFrame(self.controls, fg_color="transparent")
         selectors.grid(
-            row=1, column=0, columnspan=3, padx=12, pady=(0, 10), sticky="ew"
+            row=2, column=0, columnspan=3, padx=12, pady=(0, 10), sticky="ew"
         )
         selectors.grid_columnconfigure(0, weight=1)
         selectors.grid_columnconfigure(1, weight=1)
@@ -58,7 +86,7 @@ class CountdownUiMixin:
         )
 
         buttons = ctk.CTkFrame(self.controls, fg_color="transparent")
-        buttons.grid(row=2, column=0, columnspan=3, padx=12, pady=(2, 0), sticky="ew")
+        buttons.grid(row=3, column=0, columnspan=3, padx=12, pady=(2, 0), sticky="ew")
         for index in range(4):
             buttons.grid_columnconfigure(index, weight=1)
 
@@ -76,10 +104,57 @@ class CountdownUiMixin:
 
         ctk.CTkLabel(
             self.controls,
-            textvariable=self._status_var,
+            text="Add/Reduce",
             font=ctk.CTkFont(size=14, weight="bold"),
-            text_color="#334155",
-        ).grid(row=3, column=0, columnspan=3, padx=12, pady=(12, 12), sticky="w")
+        ).grid(row=4, column=0, columnspan=3, padx=12, pady=(10, 6), sticky="w")
+
+        delta_inputs = ctk.CTkFrame(self.controls, fg_color="transparent")
+        delta_inputs.grid(
+            row=5, column=0, columnspan=3, padx=12, pady=(0, 8), sticky="ew"
+        )
+        delta_inputs.grid_columnconfigure(0, weight=1)
+        delta_inputs.grid_columnconfigure(1, weight=1)
+        delta_inputs.grid_columnconfigure(2, weight=1)
+
+        self._delta_hours_entry = self._build_entry_cell(
+            delta_inputs,
+            column=0,
+            label="Hours",
+            variable=self._delta_hours_var,
+        )
+        self._delta_minutes_entry = self._build_entry_cell(
+            delta_inputs,
+            column=1,
+            label="Minutes",
+            variable=self._delta_minutes_var,
+        )
+        self._delta_seconds_entry = self._build_entry_cell(
+            delta_inputs,
+            column=2,
+            label="Seconds",
+            variable=self._delta_seconds_var,
+        )
+
+        delta_buttons = ctk.CTkFrame(self.controls, fg_color="transparent")
+        delta_buttons.grid(
+            row=6, column=0, columnspan=3, padx=12, pady=(0, 8), sticky="ew"
+        )
+        delta_buttons.grid_columnconfigure(0, weight=1)
+        delta_buttons.grid_columnconfigure(1, weight=1)
+
+        self.add_delta_button = ctk.CTkButton(
+            delta_buttons,
+            text="Add Delta",
+            command=lambda: self._apply_delta(1),
+        )
+        self.add_delta_button.grid(row=0, column=0, padx=(0, 6), pady=0, sticky="ew")
+
+        self.reduce_delta_button = ctk.CTkButton(
+            delta_buttons,
+            text="Reduce Delta",
+            command=lambda: self._apply_delta(-1),
+        )
+        self.reduce_delta_button.grid(row=0, column=1, padx=(6, 0), pady=0, sticky="ew")
 
         for entry in (self._hours_entry, self._minutes_entry, self._seconds_entry):
             entry.bind("<FocusOut>", self._on_input_focus_out)
@@ -139,7 +214,19 @@ class CountdownUiMixin:
 
         return hours, minutes, seconds
 
-    def _refresh_view(self) -> None:
+    def _apply_delta(self, direction: int) -> None:
+        hours = ValidationUtils.safe_int(self._delta_hours_var.get())
+        minutes = ValidationUtils.safe_int(self._delta_minutes_var.get())
+        seconds = ValidationUtils.safe_int(self._delta_seconds_var.get())
+
+        delta_seconds = direction * TimeUtils.to_seconds(hours, minutes, seconds)
+        self.adjust_time(delta_seconds)
+
+        self._delta_hours_var.set("00")
+        self._delta_minutes_var.set("00")
+        self._delta_seconds_var.set("00")
+
+    def _refresh_view(self, animate_clock: bool = False) -> None:
         state_text = {
             "ready": "Ready",
             "running": "Running",
@@ -147,6 +234,15 @@ class CountdownUiMixin:
             "finished": "Finished",
         }[self._state]
         self._status_var.set(state_text)
+
+        status_styles = {
+            "ready": ("#dbeafe", "#1d4ed8"),
+            "running": ("#dcfce7", "#166534"),
+            "paused": ("#fef3c7", "#92400e"),
+            "finished": ("#fee2e2", "#b91c1c"),
+        }
+        status_bg, status_text = status_styles[self._state]
+        self.status_badge.configure(fg_color=status_bg, text_color=status_text)
 
         self.start_button.configure(
             state="disabled" if self._state == "running" else "normal"
@@ -164,10 +260,18 @@ class CountdownUiMixin:
         self._hours_entry.configure(state=input_state, text_color=text_col)
         self._minutes_entry.configure(state=input_state, text_color=text_col)
         self._seconds_entry.configure(state=input_state, text_color=text_col)
+        self._delta_hours_entry.configure(state="normal", text_color="#000000")
+        self._delta_minutes_entry.configure(state="normal", text_color="#000000")
+        self._delta_seconds_entry.configure(state="normal", text_color="#000000")
+        self.add_delta_button.configure(state="normal")
+        self.reduce_delta_button.configure(state="normal")
 
         hours, minutes, seconds = TimeUtils.from_seconds(self._remaining_seconds)
 
         digital = f"{hours:02}:{minutes:02}:{seconds:02}"
         display_hour = hours % 12 or 12
         display_time = datetime(2000, 1, 1, display_hour, minutes, seconds)
-        self.clock.set_display(display_time, digital_text=digital)
+        if animate_clock:
+            self.clock.animate_to_display(display_time, digital_text=digital)
+        else:
+            self.clock.set_display(display_time, digital_text=digital)

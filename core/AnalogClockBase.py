@@ -12,15 +12,15 @@ class AnalogClockBase:
         self.second_path = ClockEngine(range(60))
 
     @property
-    def hour_position(self) -> int:
+    def hour_position(self) -> int | None:
         return self.hour_path.current_mark
 
     @property
-    def minute_position(self) -> int:
+    def minute_position(self) -> int | None:
         return self.minute_path.current_mark
 
     @property
-    def second_position(self) -> int:
+    def second_position(self) -> int | None:
         return self.second_path.current_mark
 
     def sync_time(self, hour: int, minute: int, second: int) -> None:

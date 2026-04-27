@@ -24,7 +24,11 @@ class ClockAngleUtils:
         minute_value: float,
         second_value: float,
     ) -> ClockAngles:
-        hour_angle = hour_value * 30 + minute_value * 0.5 + second_value * (0.5 / 60.0)
-        minute_angle = minute_value * 6 + second_value * 0.1
-        second_angle = second_value * 6
+        """
+        Calcula los ángulos para las manecillas de forma discreta.
+        Las manecillas solo se moverán cuando cambie su posición (nodo) en la lista.
+        """
+        hour_angle = (hour_value % 12) * 30.0
+        minute_angle = (minute_value % 60) * 6.0
+        second_angle = (second_value % 60) * 6.0
         return hour_angle, minute_angle, second_angle

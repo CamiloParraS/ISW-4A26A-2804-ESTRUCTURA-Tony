@@ -8,29 +8,33 @@ from .ClockMark import ClockMark, MarkType
 class ClockEngineNavMixin(Generic[MarkType]):
     """Navigation behavior over the circular doubly linked list."""
 
-    def advance(self, steps: int = 1) -> MarkType:
+    def advance(self, steps: int = 1) -> MarkType | None:
         """Move clockwise around the ring."""
         if self._current is None:
-            raise RuntimeError("ClockEngine is empty.")
+            self._current = self.head
+        if self._current is None:
+            return self.current_mark
 
         self._current = self._walk(self._current, steps, clockwise=True)
         return self.current_mark
 
-    def rewind(self, steps: int = 1) -> MarkType:
+    def rewind(self, steps: int = 1) -> MarkType | None:
         """Move counterclockwise around the ring."""
         if self._current is None:
-            raise RuntimeError("ClockEngine is empty.")
+            self._current = self.head
+        if self._current is None:
+            return self.current_mark
 
         self._current = self._walk(self._current, steps, clockwise=False)
         return self.current_mark
 
-    def place_on(self, label: MarkType) -> MarkType:
+    def place_on(self, label: MarkType) -> MarkType | None:
         """Jump to a specific mark by walking the ring from current position."""
         if self.head is None:
-            raise RuntimeError("ClockEngine is empty.")
+            return self.current_mark
 
         if label not in self._node_map:
-            raise ValueError(f"Unknown clock mark: {label!r}")
+            return self.current_mark
 
         if self._current is None:
             self._current = self.head
@@ -39,7 +43,7 @@ class ClockEngineNavMixin(Generic[MarkType]):
         ccw_steps = self._steps_to(label, clockwise=False)
 
         if self._current is None:
-            raise RuntimeError("ClockEngine current position is not set.")
+            return self.current_mark
 
         if cw_steps <= ccw_steps:
             self._current = self._walk(self._current, cw_steps, clockwise=True)
@@ -50,7 +54,7 @@ class ClockEngineNavMixin(Generic[MarkType]):
 
     def _steps_to(self, label: MarkType, *, clockwise: bool) -> int:
         if self._current is None:
-            raise RuntimeError("ClockEngine current position is not set.")
+            return 0
 
         node = self._current
         for step in range(self._size):
@@ -58,7 +62,7 @@ class ClockEngineNavMixin(Generic[MarkType]):
                 return step
             next_node = node.next_mark if clockwise else node.previous_mark
             if next_node is None:
-                raise RuntimeError("ClockEngine links were not built correctly.")
+                return self._size
             node = next_node
 
         return self._size
@@ -71,19 +75,19 @@ class ClockEngineNavMixin(Generic[MarkType]):
         clockwise: bool,
     ) -> ClockMark[MarkType]:
         if steps < 0:
-            raise ValueError("steps must be non-negative")
+            return start
 
         if self.head is None:
-            raise RuntimeError("ClockEngine is empty.")
+            return start
 
         if self._size <= 0:
-            raise RuntimeError("ClockEngine has no marks.")
+            return start
 
         current = start
         for _ in range(steps % self._size):
             next_mark = current.next_mark if clockwise else current.previous_mark
             if next_mark is None:
-                raise RuntimeError("ClockEngine links were not built correctly.")
+                return current
             current = next_mark
 
         return current

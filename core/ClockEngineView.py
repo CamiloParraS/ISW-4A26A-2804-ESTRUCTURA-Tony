@@ -19,7 +19,7 @@ class ClockEngineViewMixin(Generic[MarkType]):
             start = self._mark_for(starting_label)
 
         if start is None:
-            raise RuntimeError("ClockEngine current position is not set.")
+            return []
 
         ordered: list[MarkType] = []
         current = start
@@ -28,7 +28,7 @@ class ClockEngineViewMixin(Generic[MarkType]):
             ordered.append(current.label)
             next_mark = current.next_mark
             if next_mark is None:
-                raise RuntimeError("ClockEngine links were not built correctly.")
+                return ordered
             current = next_mark
 
         return ordered
@@ -42,7 +42,5 @@ class ClockEngineViewMixin(Generic[MarkType]):
     def __repr__(self) -> str:
         return f"ClockEngine(current_mark={self.current_mark!r}, sequence={self.sequence()!r})"
 
-    def _mark_for(self, label: MarkType) -> ClockMark[MarkType]:
-        if label not in self._node_map:
-            raise ValueError(f"Unknown clock mark: {label!r}")
-        return self._node_map[label]
+    def _mark_for(self, label: MarkType) -> ClockMark[MarkType] | None:
+        return self._node_map.get(label)

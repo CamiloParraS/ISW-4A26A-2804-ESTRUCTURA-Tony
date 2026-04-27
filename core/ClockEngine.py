@@ -2,9 +2,9 @@ from __future__ import annotations
 
 from typing import Generic, Iterable
 
-from .ClockMark import ClockMark, MarkType
 from .ClockEngineNav import ClockEngineNavMixin
 from .ClockEngineView import ClockEngineViewMixin
+from .ClockMark import ClockMark, MarkType
 
 
 class ClockEngine(
@@ -16,8 +16,6 @@ class ClockEngine(
 
     def __init__(self, marks: Iterable[MarkType]) -> None:
         mark_list = list(marks)
-        if not mark_list:
-            raise ValueError("ClockEngine needs at least one mark.")
 
         self.head: ClockMark[MarkType] | None = None
         self._current: ClockMark[MarkType] | None = None
@@ -31,9 +29,9 @@ class ClockEngine(
                 self.insert_at_end(label)
 
     @property
-    def current_mark(self) -> MarkType:
+    def current_mark(self) -> MarkType | None:
         if self._current is None:
-            raise RuntimeError("ClockEngine is empty.")
+            return None
         return self._current.label
 
     @property
@@ -50,19 +48,16 @@ class ClockEngine(
             self._current = new_node
             self._size = 1
             self._node_map[data] = new_node
-            return
+        else:
+            last = self.head.previous_mark or self.head
 
-        last = self.head.previous_mark
-        if last is None:
-            raise RuntimeError("ClockEngine links were not built correctly.")
-
-        new_node.next_mark = self.head
-        new_node.previous_mark = last
-        last.next_mark = new_node
-        self.head.previous_mark = new_node
-        self.head = new_node
-        self._size += 1
-        self._node_map[data] = new_node
+            new_node.next_mark = self.head
+            self.head.previous_mark = new_node
+            new_node.previous_mark = last
+            last.next_mark = new_node
+            self.head = new_node
+            self._size += 1
+            self._node_map[data] = new_node
 
     def insert_at_end(self, data: MarkType) -> None:
         new_node = ClockMark(data)
@@ -74,25 +69,19 @@ class ClockEngine(
             self._current = new_node
             self._size = 1
             self._node_map[data] = new_node
-            return
+        else:
+            last = self.head.previous_mark or self.head
 
-        last = self.head.previous_mark
-        if last is None:
-            raise RuntimeError("ClockEngine links were not built correctly.")
-
-        last.next_mark = new_node
-        new_node.next_mark = self.head
-        new_node.previous_mark = last
-        self.head.previous_mark = new_node
-        self._size += 1
-        self._node_map[data] = new_node
+            last.next_mark = new_node
+            new_node.next_mark = self.head
+            new_node.previous_mark = last
+            self.head.previous_mark = new_node
+            self._size += 1
+            self._node_map[data] = new_node
 
     def delete(self, data: MarkType) -> None:
-        if self.head is None:
-            raise ValueError("ClockEngine is empty.")
-
-        if data not in self._node_map:
-            raise ValueError(f"Unknown clock mark: {data!r}")
+        if self.head is None or data not in self._node_map:
+            return
 
         current = self._node_map[data]
 
@@ -106,7 +95,7 @@ class ClockEngine(
         previous_node = current.previous_mark
         next_node = current.next_mark
         if previous_node is None or next_node is None:
-            raise RuntimeError("ClockEngine links were not built correctly.")
+            return
 
         previous_node.next_mark = next_node
         next_node.previous_mark = previous_node
@@ -125,12 +114,9 @@ class ClockEngine(
             return
 
         current = self.head
-        if current is None:
-            raise RuntimeError("ClockEngine links were not built correctly.")
-
-        for _ in range(self._size):
+        if current is not None:
             print(current.label)
-            next_node = current.next_mark
-            if next_node is None:
-                raise RuntimeError("ClockEngine links were not built correctly.")
-            current = next_node
+            current = current.next_mark
+        while current != self.head:
+            print(current.label)
+            current = current.next_mark
