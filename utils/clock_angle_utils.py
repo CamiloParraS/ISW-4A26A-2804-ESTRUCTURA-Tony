@@ -2,10 +2,12 @@ from __future__ import annotations
 
 from datetime import datetime
 
+from .types import ClockAngles
+
 
 class ClockAngleUtils:
     @staticmethod
-    def angles_for_datetime(current_time: datetime) -> tuple[float, float, float]:
+    def angles_for_datetime(current_time: datetime) -> ClockAngles:
         hour_value = current_time.hour % 12
         minute_value = current_time.minute
         second_value = current_time.second + (current_time.microsecond / 1_000_000)
@@ -21,7 +23,7 @@ class ClockAngleUtils:
         hour_value: float,
         minute_value: float,
         second_value: float,
-    ) -> tuple[float, float, float]:
+    ) -> ClockAngles:
         hour_angle = hour_value * 30 + minute_value * 0.5 + second_value * (0.5 / 60.0)
         minute_angle = minute_value * 6 + second_value * 0.1
         second_angle = second_value * 6

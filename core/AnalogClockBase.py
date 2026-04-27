@@ -4,7 +4,7 @@ from .ClockEngine import ClockEngine
 
 
 class AnalogClockBase:
-    """Lo que luego se va a convertir en un reloj analogico completo."""
+    # Lo que luego se va a convertir en un reloj analogico completo.
 
     def __init__(self) -> None:
         self.hour_path = ClockEngine(range(1, 13))
@@ -24,14 +24,15 @@ class AnalogClockBase:
         return self.second_path.current_mark
 
     def sync_time(self, hour: int, minute: int, second: int) -> None:
-        """Poner la manesillad en una hora en especifica"""
+        """Sync hands by walking the CDLL to the closest position."""
         hour_val = hour % 12 or 12
+        # place_on traverses the circular doubly linked list to find the target
         self.hour_path.place_on(hour_val)
         self.minute_path.place_on(minute)
         self.second_path.place_on(second)
 
     def tick(self) -> None:
-        """Avanza el reloj 1 segundo y al resto"""
+        # Avanza el reloj 1 segundo y al resto
         sec = self.second_path.advance(1)
         if sec == 0:
             mi = self.minute_path.advance(1)

@@ -1,11 +1,17 @@
 from __future__ import annotations
 
-from typing import Generic, Iterable, Iterator
+from typing import Generic, Iterable
 
 from .ClockMark import ClockMark, MarkType
+from .ClockEngineNav import ClockEngineNavMixin
+from .ClockEngineView import ClockEngineViewMixin
 
 
-class ClockEngine(Generic[MarkType]):
+class ClockEngine(
+    ClockEngineNavMixin[MarkType],
+    ClockEngineViewMixin[MarkType],
+    Generic[MarkType],
+):
     """La cosa que representa las horas, minutos o segundos del reloj"""
 
     def __init__(self, marks: Iterable[MarkType]) -> None:
@@ -119,7 +125,8 @@ class ClockEngine(Generic[MarkType]):
             return
 
         current = self.head
-        assert current is not None
+        if current is None:
+            raise RuntimeError("ClockEngine links were not built correctly.")
 
         for _ in range(self._size):
             print(current.label)
@@ -127,100 +134,3 @@ class ClockEngine(Generic[MarkType]):
             if next_node is None:
                 raise RuntimeError("ClockEngine links were not built correctly.")
             current = next_node
-
-    def advance(self, steps: int = 1) -> MarkType:
-        """Move clockwise around the ring."""
-
-        if self._current is None:
-            raise RuntimeError("ClockEngine is empty.")
-
-        self._current = self._walk(self._current, steps, clockwise=True)
-        return self.current_mark
-
-    def rewind(self, steps: int = 1) -> MarkType:
-        """Move counterclockwise around the ring."""
-
-        if self._current is None:
-            raise RuntimeError("ClockEngine is empty.")
-
-        self._current = self._walk(self._current, steps, clockwise=False)
-        return self.current_mark
-
-    def place_on(self, label: MarkType) -> MarkType:
-        """Jump to a specific mark on the ring."""
-
-        if self.head is None:
-            raise RuntimeError("ClockEngine is empty.")
-
-        if label not in self._node_map:
-            raise ValueError(f"Unknown clock mark: {label!r}")
-
-        self._current = self._node_map[label]
-        return self.current_mark
-
-    def sequence(self, starting_label: MarkType | None = None) -> list[MarkType]:
-        """Retorna el reloj de alguna forma."""
-
-        if self.head is None:
-            return []
-
-        if starting_label is None:
-            if self._current is None:
-                # If _current isn't set, start from head (we already ensured head is not None above)
-                assert self.head is not None
-                start = self.head
-            else:
-                start = self._current
-        else:
-            start = self._mark_for(starting_label)
-
-        ordered: list[MarkType] = []
-        current = start
-        assert current is not None
-
-        for _ in range(self.size):
-            ordered.append(current.label)
-            next_mark = current.next_mark
-            if next_mark is None:
-                raise RuntimeError("ClockEngine links were not built correctly.")
-            current = next_mark
-
-        return ordered
-
-    def __iter__(self) -> Iterator[MarkType]:
-        return iter(self.sequence())
-
-    def __len__(self) -> int:
-        return self.size
-
-    def __repr__(self) -> str:
-        return f"ClockEngine(current_mark={self.current_mark!r}, sequence={self.sequence()!r})"
-
-    def _mark_for(self, label: MarkType) -> ClockMark[MarkType]:
-        if label not in self._node_map:
-            raise ValueError(f"Unknown clock mark: {label!r}")
-        return self._node_map[label]
-
-    def _walk(
-        self,
-        start: ClockMark[MarkType],
-        steps: int,
-        *,
-        clockwise: bool,
-    ) -> ClockMark[MarkType]:
-        if steps < 0:
-            raise ValueError("steps must be non-negative")
-
-        if self.head is None:
-            raise RuntimeError("ClockEngine is empty.")
-
-        steps = steps % self.size
-        current = start
-
-        for _ in range(steps):
-            next_mark = current.next_mark if clockwise else current.previous_mark
-            if next_mark is None:
-                raise RuntimeError("ClockEngine links were not built correctly.")
-            current = next_mark
-
-        return current
