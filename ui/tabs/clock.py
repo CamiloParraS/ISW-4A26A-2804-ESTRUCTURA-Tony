@@ -96,8 +96,8 @@ class ClockTab(ClockTabNavMixin, ClockTabUiMixin, ctk.CTkFrame):
         next_city = self._carousel.node_at_offset(1)
         self.breadcrumb_label.configure(
             text=(
-                f"Prev: {prev_city.city_name} ({_format_offset(prev_city.timezone_offset)})"
-                f"  |  Next: {next_city.city_name} ({_format_offset(next_city.timezone_offset)})"
+                f"Anterior: {prev_city.city_name} ({_format_offset(prev_city.timezone_offset)})"
+                f"  |  Siguiente: {next_city.city_name} ({_format_offset(next_city.timezone_offset)})"
             )
         )
 

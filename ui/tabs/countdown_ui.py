@@ -48,13 +48,13 @@ class CountdownUiMixin:
 
         ctk.CTkLabel(
             self.controls,
-            text="Countdown Controls",
+            text="Controles de la cuenta regresiva",
             font=ctk.CTkFont(size=18, weight="bold"),
         ).grid(row=0, column=0, columnspan=3, padx=12, pady=(12, 10), sticky="w")
 
         ctk.CTkLabel(
             self.controls,
-            text="Time Inputs",
+            text="Entradas de tiempo",
             font=ctk.CTkFont(size=14, weight="bold"),
         ).grid(row=1, column=0, columnspan=3, padx=12, pady=(0, 6), sticky="w")
 
@@ -69,19 +69,19 @@ class CountdownUiMixin:
         self._hours_entry = self._build_entry_cell(
             selectors,
             column=0,
-            label="Hours",
+            label="Horas",
             variable=self._hours_var,
         )
         self._minutes_entry = self._build_entry_cell(
             selectors,
             column=1,
-            label="Minutes",
+            label="Minutos",
             variable=self._minutes_var,
         )
         self._seconds_entry = self._build_entry_cell(
             selectors,
             column=2,
-            label="Seconds",
+            label="Segundos",
             variable=self._seconds_var,
         )
 
@@ -90,21 +90,25 @@ class CountdownUiMixin:
         for index in range(4):
             buttons.grid_columnconfigure(index, weight=1)
 
-        self.start_button = ctk.CTkButton(buttons, text="Start", command=self.start)
+        self.start_button = ctk.CTkButton(buttons, text="Iniciar", command=self.start)
         self.start_button.grid(row=0, column=0, padx=(0, 6), pady=0, sticky="ew")
 
-        self.pause_button = ctk.CTkButton(buttons, text="Pause", command=self.pause)
+        self.pause_button = ctk.CTkButton(buttons, text="Pausar", command=self.pause)
         self.pause_button.grid(row=0, column=1, padx=6, pady=0, sticky="ew")
 
-        self.resume_button = ctk.CTkButton(buttons, text="Resume", command=self.resume)
+        self.resume_button = ctk.CTkButton(
+            buttons, text="Reanudar", command=self.resume
+        )
         self.resume_button.grid(row=0, column=2, padx=6, pady=0, sticky="ew")
 
-        self.reset_button = ctk.CTkButton(buttons, text="Reset", command=self.reset)
+        self.reset_button = ctk.CTkButton(
+            buttons, text="Restablecer", command=self.reset
+        )
         self.reset_button.grid(row=0, column=3, padx=(6, 0), pady=0, sticky="ew")
 
         ctk.CTkLabel(
             self.controls,
-            text="Add/Reduce",
+            text="Agregar/Reducir",
             font=ctk.CTkFont(size=14, weight="bold"),
         ).grid(row=4, column=0, columnspan=3, padx=12, pady=(10, 6), sticky="w")
 
@@ -119,19 +123,19 @@ class CountdownUiMixin:
         self._delta_hours_entry = self._build_entry_cell(
             delta_inputs,
             column=0,
-            label="Hours",
+            label="Horas",
             variable=self._delta_hours_var,
         )
         self._delta_minutes_entry = self._build_entry_cell(
             delta_inputs,
             column=1,
-            label="Minutes",
+            label="Minutos",
             variable=self._delta_minutes_var,
         )
         self._delta_seconds_entry = self._build_entry_cell(
             delta_inputs,
             column=2,
-            label="Seconds",
+            label="Segundos",
             variable=self._delta_seconds_var,
         )
 
@@ -144,14 +148,14 @@ class CountdownUiMixin:
 
         self.add_delta_button = ctk.CTkButton(
             delta_buttons,
-            text="Add Delta",
+            text="Agregar delta",
             command=lambda: self._apply_delta(1),
         )
         self.add_delta_button.grid(row=0, column=0, padx=(0, 6), pady=0, sticky="ew")
 
         self.reduce_delta_button = ctk.CTkButton(
             delta_buttons,
-            text="Reduce Delta",
+            text="Reducir delta",
             command=lambda: self._apply_delta(-1),
         )
         self.reduce_delta_button.grid(row=0, column=1, padx=(6, 0), pady=0, sticky="ew")
@@ -228,10 +232,10 @@ class CountdownUiMixin:
 
     def _refresh_view(self, animate_clock: bool = False) -> None:
         state_text = {
-            "ready": "Ready",
-            "running": "Running",
-            "paused": "Paused",
-            "finished": "Finished",
+            "ready": "Listo",
+            "running": "En ejecución",
+            "paused": "Pausado",
+            "finished": "Finalizado",
         }[self._state]
         self._status_var.set(state_text)
 
