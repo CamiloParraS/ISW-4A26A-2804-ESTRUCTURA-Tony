@@ -6,10 +6,7 @@ from .ClockMark import ClockMark, MarkType
 
 
 class ClockEngineViewMixin(Generic[MarkType]):
-    """View helpers for iterating and presenting the ring."""
-
     def sequence(self, starting_label: MarkType | None = None) -> list[MarkType]:
-        """Return the ordered ring labels from the chosen starting point."""
         if self.head is None:
             return []
 

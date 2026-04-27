@@ -6,7 +6,7 @@ import customtkinter as ctk
 
 from core import WorldClockCarousel, WorldClockNode
 from ui.helpers import SchedulerUtils
-from utils import ClockAngleUtils, ClockAngles, TimeUtils
+from utils import ClockAngleUtils, ClockAngles
 
 from .clock_cities import WORLD_CLOCK_CITIES
 from .clock_nav import ClockTabNavMixin
@@ -86,7 +86,6 @@ class ClockTab(ClockTabNavMixin, ClockTabUiMixin, ctk.CTkFrame):
         utc_now = self._utc_now_provider()
         city = self._carousel.current
         city_time = self._city_time(city, utc_now)
-        digital_time = TimeUtils.format_digital(city_time)
 
         self.city_label.configure(
             text=f"{city.city_name}  |  {_format_offset(city.timezone_offset)}"
@@ -102,9 +101,9 @@ class ClockTab(ClockTabNavMixin, ClockTabUiMixin, ctk.CTkFrame):
         )
 
         if animate:
-            self.clock.animate_to_display(city_time, digital_text=digital_time)
+            self.clock.animate_to_display(city_time)
         else:
-            self.clock.set_display(city_time, digital_text=digital_time)
+            self.clock.set_display(city_time)
 
         self._sync_preview(utc_now)
 

@@ -62,7 +62,7 @@ class AnalogClockWidget(ClockAnimator, ctk.CTkFrame):
             text_color=TEXT_SECONDARY,
         )
         self.digital_label.grid(row=1, column=0, padx=14, pady=(0, 14), sticky="ew")
-        self.digital_label.configure(text=self._digital_formatter(self._display_time))
+        self.digital_label.configure(text=self._get_digital_from_cdll())
 
         self.after_idle(self._draw_clock)
 
@@ -76,6 +76,18 @@ class AnalogClockWidget(ClockAnimator, ctk.CTkFrame):
         SchedulerUtils.cancel_after_job(self, job)
         setattr(self, attribute_name, None)
 
+    def _get_digital_from_cdll(self) -> str:
+        hour = self.clock_base.hour_position
+        minute = self.clock_base.minute_position
+        second = self.clock_base.second_position
+
+        if hour is None or minute is None or second is None:
+            return self._digital_formatter(self._display_time)
+
+        display_hour = hour if hour != 12 else 12
+        am_pm = "AM" if self._display_time.hour < 12 else "PM"
+        return f"{display_hour:02}:{minute:02}:{second:02} {am_pm}"
+
     def set_display(
         self, current_time: datetime, digital_text: str | None = None
     ) -> None:
@@ -85,7 +97,7 @@ class AnalogClockWidget(ClockAnimator, ctk.CTkFrame):
         self._sync_to_current_time(current_time)
 
         if digital_text is None:
-            digital_text = self._digital_formatter(current_time)
+            digital_text = self._get_digital_from_cdll()
 
         self.digital_label.configure(text=digital_text)
         self._draw_clock()

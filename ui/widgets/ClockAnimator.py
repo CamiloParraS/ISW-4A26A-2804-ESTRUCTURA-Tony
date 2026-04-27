@@ -23,7 +23,7 @@ class ClockAnimator:
         self._cancel_job("_animation_job")
 
         if digital_text is None:
-            digital_text = self._digital_formatter(current_time)
+            digital_text = self._get_digital_from_cdll()
 
         self.digital_label.configure(text=digital_text)
         self._animation_target_time = current_time
